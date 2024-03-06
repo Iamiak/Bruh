@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Key Generator</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #000000;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+}
+
+.container {
+  max-width: 600px;
+  margin: 100px auto;
+  background-color: #222222;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+h1 {
+  color: #ffffff;
+}
+
+#keyStatus {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+#countdownWrapper {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+#key {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+#copyBtn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#copyBtn:hover {
+  background-color: #0056b3;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Key Generator</h1>
+  <div id="keyStatus">
+    <div id="countdownWrapper"></div>
+    <div id="key"></div>
+    <button id="copyBtn" style="display: none;">Copy Key</button>
+  </div>
+</div>
+
+<script>
+function getHWID() {
+  // For demonstration purposes, generating a fixed HWID
+  return 'myHWID';
+}
+
+function rotateKey() {
+  var validKeys = ["JTt3i77", "8y3hq7sy3y", "Uet3g6s6", "jsu2uhw", "ishw72u"];
+  var currentKeyIndex = Math.floor(Math.random() * validKeys.length);
+  return validKeys[currentKeyIndex];
+}
+
+function updateKeyAndTimer(key, remainingTime) {
+  var keyElement = document.getElementById('key');
+  keyElement.textContent = "Your key: " + key;
+  var countdownWrapper = document.getElementById('countdownWrapper');
+  setInterval(function() {
+    var hours = Math.floor(remainingTime / 3600);
+    var minutes = Math.floor((remainingTime % 3600) / 60);
+    var seconds = remainingTime % 60;
+    countdownWrapper.textContent = "Expires in: " + hours + "h " + minutes + "m " + seconds + "s";
+    remainingTime--;
+    if (remainingTime <= 0) {
+      var newKey = rotateKey();
+      localStorage.setItem('key_' + getHWID(), newKey);
+      localStorage.setItem('expiry_' + getHWID(), Date.now() + (24 * 60 * 60 * 1000)); // Set expiry to 24 hours from now
+      updateKeyAndTimer(newKey, 24 * 60 * 60); // Start countdown with new key
+      document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+      document.getElementById('copyBtn').addEventListener('click', function() {
+        var keyText = document.getElementById('key').textContent;
+        navigator.clipboard.writeText(keyText).then(function() {
+          alert('Key copied to clipboard: ' + keyText);
+        }, function(err) {
+          console.error('Could not copy text: ', err);
+        });
+      });
+    }
+  }, 1000);
+}
+
+function startGeneratingKey() {
+  var hwid = getHWID();
+  var expiryTime = localStorage.getItem('expiry_' + hwid);
+  if (expiryTime && expiryTime > Date.now()) {
+    var remainingTime = Math.floor((expiryTime - Date.now()) / 1000);
+    var key = localStorage.getItem('key_' + hwid);
+    updateKeyAndTimer(key, remainingTime);
+    document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+    document.getElementById('copyBtn').addEventListener('click', function() {
+      var keyText = document.getElementById('key').textContent;
+      navigator.clipboard.writeText(keyText).then(function() {
+        alert('Key copied to clipboard: ' + keyText);
+      }, function(err) {
+        console.error('Could not copy text: ', err);
+      });
+    });
+  } else {
+    var countdown = 5;
+    var countdownWrapper = document.getElementById('countdownWrapper');
+    var interval = setInterval(function() {
+      countdownWrapper.textContent = "Generating key in " + countdown + " seconds...";
+      countdown--;
+      if (countdown < 0) {
+        clearInterval(interval);
+        var key = rotateKey();
+        localStorage.setItem('key_' + hwid, key);
+        localStorage.setItem('expiry_' + hwid, Date.now() + (24 * 60 * 60 * 1000)); // Set expiry to 24 hours from now
+        updateKeyAndTimer(key, 24 * 60 * 60); // Start countdown with new key
+        document.getElementById('copyBtn').style.display = 'inline-block'; // Show copy button
+        document.getElementById('copyBtn').addEventListener('click', function() {
+          var keyText = document.getElementById('key').textContent;
+          navigator.clipboard.writeText(keyText).then(function() {
+            alert('Key copied to clipboard: ' + keyText);
+          }, function(err) {
+            console.error('Could not copy text: ', err);
+          });
+        });
+      }
+    }, 1000);
+  }
+}
+
+startGeneratingKey(); // Start generating key with countdown
+</script>
+</body>
+</html>
